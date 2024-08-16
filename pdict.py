@@ -25,7 +25,14 @@ class PDict:
         self.dict[item] = value
 
     def __delitem__(self, item):
-        pass #TODO
+        self.con.execute("DELETE FROM data WHERE dict=? AND key=?", (self.dictname, jsonpickle.dumps(item)))
+        self.con.commit()
+        del self.dict[item]
 
     def __repr__(self):
         return self.dict.__repr__()
+    
+    def update(self, input_dict):
+        for key, value in input_dict.items():
+            if key not in self.dict or self.dict[key] != value:
+                self[key] = value

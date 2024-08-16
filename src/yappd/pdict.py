@@ -16,17 +16,23 @@ class PDict:
         for key, value in results:
             self._dict[self._decode(key)] = jsonpickle.loads(value)            
 
+    def __delitem__(self, key):
+        self.con.execute("DELETE FROM data WHERE dict=? AND key=?", (self.name, self._encode(key)))
+        self.con.commit()
+        del self._dict[key]
+
+    def __iter__(self):
+        return self._dict.__iter__()
+    
+    def __len__(self):
+        return len(self._dict)
+
     def __getitem__(self, key):
         return self._dict[key]
     
     def __setitem__(self, key, value):
         self._write(key, value)
         self._dict[key] = value
-
-    def __delitem__(self, key):
-        self.con.execute("DELETE FROM data WHERE dict=? AND key=?", (self.name, self._encode(key)))
-        self.con.commit()
-        del self._dict[key]
 
     def __repr__(self):
         return self._dict.__repr__()
@@ -40,11 +46,12 @@ class PDict:
     def _write(self, key, value):
         self.con.execute("INSERT OR REPLACE INTO data VALUES(?, ?, ?)", (self.name, self._encode(key), self._encode(value)))
         self.con.commit()
+
+    def items(self):
+        return self._dict.items()
     
-    def update(self, input_dict):
-        for key, value in input_dict.items():
-            if key not in self._dict or self._dict[key] != value:
-                self[key] = value
+    def keys(self):
+        return self._dict.keys()
 
     def save(self, *args):
         """Updates the state stored on disk to match the in memory dict. This is only intended to be used to synchronize any mutations of stored objects. It's not intended that users modify the internal dict directly.
@@ -57,3 +64,11 @@ class PDict:
         else:
             for key, value in self._dict.items():
                 self._write(key, value)
+
+    def update(self, input_dict):
+        for key, value in input_dict.items():
+            if key not in self._dict or self._dict[key] != value:
+                self[key] = value
+
+    def values(self):
+        return self._dict.values()

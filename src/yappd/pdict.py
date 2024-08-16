@@ -14,7 +14,7 @@ class PDict:
 
         results = self.con.execute("SELECT key, value FROM data WHERE dict=?", (name,)).fetchall()
         for key, value in results:
-            self._dict[jsonpickle.loads(key)] = jsonpickle.loads(value)            
+            self._dict[self._decode(key)] = jsonpickle.loads(value)            
 
     def __getitem__(self, key):
         return self._dict[key]
@@ -24,15 +24,21 @@ class PDict:
         self._dict[key] = value
 
     def __delitem__(self, key):
-        self.con.execute("DELETE FROM data WHERE dict=? AND key=?", (self.name, jsonpickle.dumps(key)))
+        self.con.execute("DELETE FROM data WHERE dict=? AND key=?", (self.name, self._encode(key)))
         self.con.commit()
         del self._dict[key]
 
     def __repr__(self):
         return self._dict.__repr__()
     
+    def _encode(self, value):
+        return jsonpickle.encode(value, keys=True)
+    
+    def _decode(self, value):
+        return jsonpickle.decode(value, keys=True)
+    
     def _write(self, key, value):
-        self.con.execute("INSERT OR REPLACE INTO data VALUES(?, ?, ?)", (self.name, jsonpickle.dumps(key), jsonpickle.dumps(value)))
+        self.con.execute("INSERT OR REPLACE INTO data VALUES(?, ?, ?)", (self.name, self._encode(key), self._encode(value)))
         self.con.commit()
     
     def update(self, input_dict):

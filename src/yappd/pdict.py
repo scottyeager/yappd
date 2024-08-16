@@ -66,9 +66,9 @@ class PDict:
                 self._write(key, value)
 
     def update(self, input_dict):
+        # We set all values, even if the same value is already stored at the same key, in order to also support preserving mutated objects this way
         for key, value in input_dict.items():
-            if key not in self._dict or self._dict[key] != value:
-                self[key] = value
+            self[key] = value
 
     def values(self):
         return self._dict.values()

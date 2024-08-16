@@ -32,3 +32,29 @@ Each PDict needs a file to write its data into, and the path to the file is the 
 p1 = PDict('mydata', 'default') # Equivalent to example above
 p2 = PDict('mydata', 'p2') # This one uses p2 as the name so there's no conflict
 ```
+
+## Caveat, data mutation
+
+There's a major caveat to keep in mind, which is mutable data types. Take this usage for example:
+
+```python
+p = PDict('mydata')
+p['mylist'] = []
+p['mylist'].append(1)
+assert p['mylist'] == [1]
+p = PDict('mydata') # Reload the dict from disk
+assert p['mylist'] == [] # Change not stored to disk
+```
+
+At this point the value stored on disk for `mylist` is an empty list, but the value stored in the program memory is `[1]`. Since yappd doesn't make any effort to detect if data is mutated after it's added (if this is even possible), you must explicitly store any mutated values again to update them on disk.
+
+```python
+p = PDict('mydata')
+p['mylist'] = []
+p['mylist'] = p['mylist'].append(1)
+assert p['mylist'] == [1]
+p = PDict('mydata')
+assert p['mylist'] == [1] # This time it's okay
+```
+
+I plan to add a couple of helper functions to make working with mutable data types more ergonomic. It will still fall on the user to understand they are mutating data and ensure mutations are stored to disk.
